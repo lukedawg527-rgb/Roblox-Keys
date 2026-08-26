@@ -1,0 +1,26 @@
+name: Generate Daily Key
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Automatically runs every 24 hours at midnight UTC
+  workflow_dispatch: # Allows manual key changes anytime
+
+jobs:
+  update-key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Generate Random Key
+        run: |
+          NEW_KEY=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
+          echo "$NEW_KEY" > key.txt
+          echo "New Generated Key is: $NEW_KEY"
+
+      - name: Commit and Save Key
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add key.txt
+          git commit -m "Rotated dynamic key" || exit 0
+          git push
